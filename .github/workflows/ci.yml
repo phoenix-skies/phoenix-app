@@ -71,14 +71,12 @@ jobs:
             -f ${{ matrix.dockerfile }} ${{ matrix.context }}
 
       - name: Trivy scan (fail on fixable CRITICAL)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
-          severity: CRITICAL
-          ignore-unfixed: true
-          # repo variable TRIVY_EXIT_CODE=0 turns the gate into report-only (emergency use)
-          exit-code: ${{ vars.TRIVY_EXIT_CODE || '1' }}
-          format: table
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image \
+            --severity CRITICAL --ignore-unfixed --no-progress \
+            --exit-code ${{ vars.TRIVY_EXIT_CODE || '1' }} \
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
 
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'
